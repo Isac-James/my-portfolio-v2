@@ -17,7 +17,7 @@ export default function Projects() {
 
   useEffect(() => {
     // Fetch data from your backend
-   axios.get('https://my-portfolio-api-7n0t.onrender.com/api/projects')
+   axios.get('https://tumi-portfolio-api.onrender.com/api/projects')
       .then(res => setProjects(res.data))
       .catch(err => console.error(err));
   }, []);

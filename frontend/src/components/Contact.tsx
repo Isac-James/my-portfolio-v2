@@ -11,7 +11,7 @@ export default function Contact() {
     e.preventDefault();
     setStatus('Sending...');
     try {
-      await axios.post('https://my-portfolio-api-7n0t.onrender.com/api/contact', form);
+      await axios.post('https://tumi-portfolio-api.onrender.com/api/contact', form);
       setStatus('Message Sent! 🚀');
       setForm({ name: '', email: '', message: '' });
     } catch (err) {
