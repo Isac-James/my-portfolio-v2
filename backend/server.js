@@ -67,12 +67,17 @@ app.post('/api/contact', async (req, res) => {
   // Create a transporter (using Gmail as an example)
   // For production, use a service like SendGrid
   const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS
-    }
-  });
+  host: "smtp.gmail.com", // Explicitly say Google
+  port: 587,              // Use Port 587 (Reliable)
+  secure: false,          // False for Port 587 (True is for 465)
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+  tls: {
+    rejectUnauthorized: false // Helps avoid some security certificate errors
+  }
+});
 
   const mailOptions = {
     from: email,
