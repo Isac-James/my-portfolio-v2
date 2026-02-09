@@ -1,30 +1,28 @@
 'use client';
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import emailjs from '@emailjs/browser';
+import axios from 'axios';
 
 export default function Contact() {
-  const formRef = useRef<HTMLFormElement>(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    message: ''
+  });
   const [status, setStatus] = useState('');
 
-  // 👇 PASTE YOUR EMAILJS KEYS HERE
-  const SERVICE_ID = "service_xxxxx"; 
-  const TEMPLATE_ID = "template_xxxxx";
-  const PUBLIC_KEY = "xxxxx_public_key";
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus('Sending...');
 
-    if (formRef.current) {
-      emailjs.sendForm(service_mevbd7c, template_xj0fqnf, formRef.current, -p6sgYiZncvWU_rUS)
-        .then(() => {
-          setStatus('Message sent! ✅');
-          formRef.current?.reset();
-        }, (error) => {
-          console.error(error);
-          setStatus('Failed to send. ❌');
-        });
+    try {
+      // 👇 Make sure this link matches your Render Backend URL exactly
+      await axios.post('https://tumi-portfolio-api.onrender.com/api/contact', formData);
+      setStatus('Message sent! ✅');
+      setFormData({ name: '', email: '', message: '' });
+    } catch (error) {
+      console.error(error);
+      setStatus('Failed to send. ❌');
     }
   };
 
@@ -36,41 +34,40 @@ export default function Contact() {
         className="glass p-8 rounded-2xl border border-white/10"
       >
         <h2 className="text-3xl font-bold mb-6 text-center">Get In Touch</h2>
-        
-        <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label className="block text-sm text-slate-400 mb-2">Name</label>
             <input 
               type="text" 
-              name="user_name"  // Must match EmailJS template variable
+              value={formData.name}
+              onChange={(e) => setFormData({...formData, name: e.target.value})}
               required 
-              className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-3 focus:ring-2 focus:ring-blue-400 outline-none transition-all"
+              className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-3 outline-none"
             />
           </div>
-          
           <div>
             <label className="block text-sm text-slate-400 mb-2">Email</label>
             <input 
               type="email" 
-              name="user_email" // Must match EmailJS template variable
+              value={formData.email}
+              onChange={(e) => setFormData({...formData, email: e.target.value})}
               required 
-              className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-3 focus:ring-2 focus:ring-blue-400 outline-none transition-all"
+              className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-3 outline-none"
             />
           </div>
-          
           <div>
             <label className="block text-sm text-slate-400 mb-2">Message</label>
             <textarea 
-              name="message"    // Must match EmailJS template variable
-              rows={5} 
+              rows={5}
+              value={formData.message}
+              onChange={(e) => setFormData({...formData, message: e.target.value})}
               required 
-              className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-3 focus:ring-2 focus:ring-blue-400 outline-none transition-all"
+              className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-3 outline-none"
             ></textarea>
           </div>
-
           <button 
             type="submit" 
-            className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded-lg transition-colors"
+            className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded-lg"
           >
             {status || 'Send Message'}
           </button>
