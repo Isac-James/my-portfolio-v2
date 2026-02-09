@@ -17,7 +17,7 @@ export default function Contact() {
     setStatus('Sending...');
 
     if (formRef.current) {
-      emailjs.sendForm(SERVICE_ID, TEMPLATE_ID, formRef.current, PUBLIC_KEY)
+      emailjs.sendForm(service_mevbd7c, template_xj0fqnf, formRef.current, -p6sgYiZncvWU_rUS)
         .then(() => {
           setStatus('Message sent! ✅');
           formRef.current?.reset();
