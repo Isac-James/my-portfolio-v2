@@ -33,15 +33,27 @@ const ProjectSchema = new mongoose.Schema({
 const Project = mongoose.models.Project || mongoose.model('Project', ProjectSchema);
 
 // 6. CONFIGURE EMAIL (GLOBAL)
-// We define this ONCE here, so we don't recreate it every time someone emails.
+// We use MANUAL settings (host/port) instead of 'service: gmail' to bypass some blocks
 const transporter = nodemailer.createTransport({
-  service: 'gmail', // Built-in Gmail service knows the host/port automatically
+  host: "smtp.gmail.com",
+  port: 587,
+  secure: false, // true for 465, false for other ports
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
   tls: {
     rejectUnauthorized: false
+  }
+});
+
+// 🔍 VERIFY CONNECTION ON STARTUP (The Truth Teller)
+// This runs immediately when the server starts to check if Google is blocking us
+transporter.verify(function (error, success) {
+  if (error) {
+    console.log("🚨 EMAIL CONFIG ERROR:", error);
+  } else {
+    console.log("✅ READY TO SEND EMAILS");
   }
 });
 
