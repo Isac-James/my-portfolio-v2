@@ -1,19 +1,17 @@
-// ---------------------------------------------------------
+const dns = require('node:dns');
+dns.setDefaultResultOrder('ipv4first'); // 👈 THIS IS THE FIX
 // EMAIL CONFIGURATION (FORCE IPv4)
-// ---------------------------------------------------------
 const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
+  host: "smtp.gmail.com",
   port: 587,
-  secure: false, // Must be false for port 587
+  secure: false, 
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
   tls: {
-    rejectUnauthorized: false, // Helps with some cloud server SSL issues
-    ciphers: "SSLv3"
-  },
-  family: 4 // <--- THIS IS THE KEY! It forces IPv4 connection
+    rejectUnauthorized: false
+  }
 });
 
 // ... rest of your code
