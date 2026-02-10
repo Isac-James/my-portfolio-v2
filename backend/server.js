@@ -1,37 +1,41 @@
-// 1. Force IPv4 (Crucial for Render/Gmail)
+// 1. DNS FIX (MUST BE AT THE VERY TOP)
+// This forces your server to use IPv4, which fixes the Gmail connection error
 const dns = require('node:dns');
 dns.setDefaultResultOrder('ipv4first');
 
-require('dotenv').config();
+// 2. IMPORTS & CONFIG
+require('dotenv').config(); // Load the .env file (passwords) FIRST
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const nodemailer = require('nodemailer');
+const nodemailer = require('nodemailer'); // Import the email library
 
 const app = express();
 
-// 2. Middleware
-app.use(express.json());
+// 3. MIDDLEWARE
 app.use(cors());
+app.use(express.json());
 
-// 3. Connect to MongoDB
+// 4. DATABASE CONNECTION
 mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('✅ MongoDB Connected'))
-  .catch(err => console.error('❌ MongoDB Connection Error:', err));
+  .then(() => console.log("✅ MongoDB Connected"))
+  .catch(err => console.log("❌ DB Error:", err));
 
-// 4. Define Project Schema
-const projectSchema = new mongoose.Schema({
+// 5. DEFINE PROJECT MODEL
+const ProjectSchema = new mongoose.Schema({
   title: String,
   description: String,
+  tags: [String],
   image: String,
-  link: String,
-  tags: [String]
+  link: String
 });
-const Project = mongoose.models.Project || mongoose.model('Project', projectSchema);
+// Prevent "OverwriteModelError" if the code re-runs
+const Project = mongoose.models.Project || mongoose.model('Project', ProjectSchema);
 
-// 5. Configure Email
+// 6. CONFIGURE EMAIL (GLOBAL)
+// We define this ONCE here, so we don't recreate it every time someone emails.
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  service: 'gmail', // Built-in Gmail service knows the host/port automatically
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
@@ -43,75 +47,62 @@ const transporter = nodemailer.createTransport({
 
 // --- ROUTES ---
 
-// GET Projects
+// GET: Fetch all projects
 app.get('/api/projects', async (req, res) => {
   try {
     const projects = await Project.find();
-    console.log(`📂 Found ${projects.length} projects`);
-    res.json(projects);
-  } catch (error) {
-    console.error('❌ Project Fetch Error:', error);
-    res.status(500).json({ message: 'Server Error' });
-  }
-});
-
-// 👇 NEW: SEED ROUTE (Run this once to fill your database!)
-app.get('/api/seed', async (req, res) => {
-  const sampleProjects = [
-    {
-      title: "E-Commerce Dashboard",
-      description: "A full-stack dashboard for managing products and orders.",
-      image: "https://via.placeholder.com/300",
-      link: "https://github.com",
-      tags: ["React", "Node.js", "MongoDB"]
-    },
-    {
-      title: "Portfolio Website",
-      description: "My personal developer portfolio built with Next.js.",
-      image: "https://via.placeholder.com/300",
-      link: "https://github.com",
-      tags: ["Next.js", "Tailwind", "Framer Motion"]
-    },
-    {
-      title: "Task Manager API",
-      description: "A RESTful API for creating and managing daily tasks.",
-      image: "https://via.placeholder.com/300",
-      link: "https://github.com",
-      tags: ["Express", "MongoDB", "JWT"]
+    
+    // If database is empty, return your hardcoded fallback data
+    if (projects.length === 0) {
+      console.log("📂 Database empty, returning fallback projects.");
+      return res.json([
+        {
+          _id: "1",
+          title: "Event Website",
+          description: "A Planning website that showcase upcoming events.",
+          tags: ["Next.js", "Three.js", "Stripe"],
+          image: "https://plan-kohl-six.vercel.app/farm.jpeg",
+          link: "https://plan-kohl-six.vercel.app/"
+        },
+        {
+          _id: "2",
+          title: "To do list",
+          description: "Simple task management app.",
+          tags: ["HTML", "CSS", "JS"],
+          image: "https://specials-images.forbesimg.com/dam/imageserve/1092571024/960x0.jpg?fit=scale",
+          link: "https://to-do-app-two-lilac.vercel.app/"
+        }
+      ]);
     }
-  ];
-
-  try {
-    await Project.deleteMany({}); // Clear old data
-    await Project.insertMany(sampleProjects); // Add new data
-    res.json({ message: "✅ Database seeded successfully! Refresh your portfolio." });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+    
+    res.json(projects);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
-// POST Contact (Send Email)
+// POST: Handle Contact Form
 app.post('/api/contact', async (req, res) => {
   const { name, email, message } = req.body;
-  console.log(`📩 New message attempt from: ${email}`);
+  console.log(`📩 Attempting to send email from: ${email}`);
 
   const mailOptions = {
-    from: email,
-    to: process.env.EMAIL_USER,
+    from: email, // This shows who the email is "from"
+    to: process.env.EMAIL_USER, // Sent TO you
     subject: `Portfolio Message from ${name}`,
     text: `Name: ${name}\nEmail: ${email}\nMessage: ${message}`
   };
 
   try {
     await transporter.sendMail(mailOptions);
-    console.log('✅ Email sent successfully!');
-    res.status(200).json({ success: true, message: 'Email sent!' });
+    console.log("✅ Email sent successfully!");
+    res.status(200).json({ success: true, message: "Email sent!" });
   } catch (error) {
-    console.error('❌ EMAIL FAILED:', error);
-    res.status(500).json({ success: false, message: error.message });
+    console.error("❌ Email Failed:", error);
+    res.status(500).json({ success: false, message: "Email failed to send.", error: error.message });
   }
 });
 
-// Start Server
+// 7. START SERVER
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
