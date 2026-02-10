@@ -19,7 +19,7 @@ mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('✅ MongoDB Connected'))
   .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
-// 4. Define Project Schema (So projects show up!)
+// 4. Define Project Schema
 const projectSchema = new mongoose.Schema({
   title: String,
   description: String,
@@ -27,7 +27,6 @@ const projectSchema = new mongoose.Schema({
   link: String,
   tags: [String]
 });
-// Check if model exists before compiling to avoid overwrite errors
 const Project = mongoose.models.Project || mongoose.model('Project', projectSchema);
 
 // 5. Configure Email
@@ -56,6 +55,41 @@ app.get('/api/projects', async (req, res) => {
   }
 });
 
+// 👇 NEW: SEED ROUTE (Run this once to fill your database!)
+app.get('/api/seed', async (req, res) => {
+  const sampleProjects = [
+    {
+      title: "E-Commerce Dashboard",
+      description: "A full-stack dashboard for managing products and orders.",
+      image: "https://via.placeholder.com/300",
+      link: "https://github.com",
+      tags: ["React", "Node.js", "MongoDB"]
+    },
+    {
+      title: "Portfolio Website",
+      description: "My personal developer portfolio built with Next.js.",
+      image: "https://via.placeholder.com/300",
+      link: "https://github.com",
+      tags: ["Next.js", "Tailwind", "Framer Motion"]
+    },
+    {
+      title: "Task Manager API",
+      description: "A RESTful API for creating and managing daily tasks.",
+      image: "https://via.placeholder.com/300",
+      link: "https://github.com",
+      tags: ["Express", "MongoDB", "JWT"]
+    }
+  ];
+
+  try {
+    await Project.deleteMany({}); // Clear old data
+    await Project.insertMany(sampleProjects); // Add new data
+    res.json({ message: "✅ Database seeded successfully! Refresh your portfolio." });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // POST Contact (Send Email)
 app.post('/api/contact', async (req, res) => {
   const { name, email, message } = req.body;
@@ -69,13 +103,11 @@ app.post('/api/contact', async (req, res) => {
   };
 
   try {
-    // Attempt to send
     await transporter.sendMail(mailOptions);
     console.log('✅ Email sent successfully!');
     res.status(200).json({ success: true, message: 'Email sent!' });
   } catch (error) {
-    console.error('❌ EMAIL FAILED. Reason:', error);
-    // Send the specific error back to the frontend so we can see it
+    console.error('❌ EMAIL FAILED:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
