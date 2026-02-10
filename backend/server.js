@@ -1,26 +1,36 @@
-// 1. Force IPv4 (MUST BE AT THE VERY TOP)
+// 1. Force IPv4 (Crucial for Render/Gmail)
 const dns = require('node:dns');
 dns.setDefaultResultOrder('ipv4first');
 
-// 2. Import Libraries
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const nodemailer = require('nodemailer'); // <--- This must be here!
+const nodemailer = require('nodemailer');
 
 const app = express();
 
-// 3. Middleware
+// 2. Middleware
 app.use(express.json());
 app.use(cors());
 
-// 4. Connect to MongoDB
+// 3. Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('MongoDB Connected'))
-  .catch(err => console.log(err));
+  .then(() => console.log('✅ MongoDB Connected'))
+  .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
-// 5. Configure Email (Now it works because we imported it above)
+// 4. Define Project Schema (So projects show up!)
+const projectSchema = new mongoose.Schema({
+  title: String,
+  description: String,
+  image: String,
+  link: String,
+  tags: [String]
+});
+// Check if model exists before compiling to avoid overwrite errors
+const Project = mongoose.models.Project || mongoose.model('Project', projectSchema);
+
+// 5. Configure Email
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
@@ -32,32 +42,44 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-// 6. Routes
+// --- ROUTES ---
+
+// GET Projects
+app.get('/api/projects', async (req, res) => {
+  try {
+    const projects = await Project.find();
+    console.log(`📂 Found ${projects.length} projects`);
+    res.json(projects);
+  } catch (error) {
+    console.error('❌ Project Fetch Error:', error);
+    res.status(500).json({ message: 'Server Error' });
+  }
+});
+
+// POST Contact (Send Email)
 app.post('/api/contact', async (req, res) => {
   const { name, email, message } = req.body;
+  console.log(`📩 New message attempt from: ${email}`);
 
   const mailOptions = {
     from: email,
     to: process.env.EMAIL_USER,
-    subject: `New Portfolio Message from ${name}`,
+    subject: `Portfolio Message from ${name}`,
     text: `Name: ${name}\nEmail: ${email}\nMessage: ${message}`
   };
 
   try {
+    // Attempt to send
     await transporter.sendMail(mailOptions);
+    console.log('✅ Email sent successfully!');
     res.status(200).json({ success: true, message: 'Email sent!' });
   } catch (error) {
-    console.error('Email Error:', error);
-    res.status(500).json({ success: false, message: 'Failed to send email' });
+    console.error('❌ EMAIL FAILED. Reason:', error);
+    // Send the specific error back to the frontend so we can see it
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 
-app.get('/api/projects', async (req, res) => {
-    // If you have a Project model, use it here.
-    // For now, we return an empty array to stop errors.
-    res.json([]); 
-});
-
-// 7. Start Server
+// Start Server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
