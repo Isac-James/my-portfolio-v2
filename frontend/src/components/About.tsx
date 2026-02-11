@@ -20,7 +20,7 @@ export default function About() {
           Hello! My name is <span className="text-blue-400">Isaac</span> and I enjoy creating things that live on the internet. My interest in web development started back in 2023 when I decided to try editing custom Tumblr themes — turns out hacking together HTML & CSS is pretty fun!
         </p>
         <p className="text-slate-400 mb-4 leading-relaxed">
-          Fast-forward to today, and I’ve had the privilege of creating a <span className="text-blue-400">advertising agency web site</span>, a <span className="text-blue-400">start-up</span>, and a <span className="text-blue-400">huge corporation</span>.
+          Fast-forward to today, and I’ve had the privilege of helping in creating an <span className="text-blue-400">advertising agency web site</span>, a <span className="text-blue-400">start-up</span>, and a <span className="text-blue-400">and my very own first big project an event website</span>.
         </p>
         <p className="text-slate-400 leading-relaxed">
           Here are a few technologies I've been working with recently:
